@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<module>
+	<name>smscodeverification</name>
+	<displayName><![CDATA[Sms Code Verification]]></displayName>
+	<version><![CDATA[1.0.0]]></version>
+	<description><![CDATA[Adds new field to chosen products in delivery form to check sms code verification ]]></description>
+	<author><![CDATA[Pablo&Wiktor]]></author>
+	<tab><![CDATA[checkout]]></tab>
+	<is_configurable>1</is_configurable>
+	<need_instance>1</need_instance>
+</module>
