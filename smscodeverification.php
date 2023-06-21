@@ -40,9 +40,6 @@ class Smscodeverification extends Module
         $this->author = 'Pablo&Wiktor';
         $this->need_instance = 0;
 
-        /**
-         * Set $this->bootstrap to true if your module is compliant with bootstrap (PrestaShop 1.6)
-         */
         $this->bootstrap = true;
 
         parent::__construct();
@@ -53,52 +50,29 @@ class Smscodeverification extends Module
         $this->ps_versions_compliancy = array('min' => '1.6', 'max' => _PS_VERSION_);
     }
 
-    /**
-     * Don't forget to create update methods if needed:
-     * http://doc.prestashop.com/display/PS16/Enabling+the+Auto-Update
-     */
     public function install()
     {
-        Configuration::updateValue('SMSCODEVERIFICATION_LIVE_MODE', false);
-
         include(dirname(__FILE__).'/sql/install.php');
 
-        return parent::install() &&
-            $this->registerHook('header') &&
-            $this->registerHook('displayBackOfficeHeader');
+        return parent::install();
     }
 
     public function uninstall()
     {
-        Configuration::deleteByName('SMSCODEVERIFICATION_LIVE_MODE');
-
         include(dirname(__FILE__).'/sql/uninstall.php');
 
         return parent::uninstall();
     }
 
-    /**
-     * Load the configuration form
-     */
     public function getContent()
     {
-        /**
-         * If values have been submitted in the form, process.
-         */
         if (((bool)Tools::isSubmit('submitSmscodeverificationModule')) == true) {
             $this->postProcess();
         }
 
-        $this->context->smarty->assign('module_dir', $this->_path);
-
-        $output = $this->context->smarty->fetch($this->local_path.'views/templates/admin/configure.tpl');
-
-        return $output.$this->renderForm();
+        return $this->renderForm();
     }
 
-    /**
-     * Create the form that will be displayed in the configuration of your module.
-     */
     protected function renderForm()
     {
         $helper = new HelperForm();
@@ -112,7 +86,7 @@ class Smscodeverification extends Module
         $helper->identifier = $this->identifier;
         $helper->submit_action = 'submitSmscodeverificationModule';
         $helper->currentIndex = $this->context->link->getAdminLink('AdminModules', false)
-            .'&configure='.$this->name.'&tab_module='.$this->tab.'&module_name='.$this->name;
+            . '&configure=' . $this->name . '&tab_module='.$this->tab . '&module_name=' . $this->name;
         $helper->token = Tools::getAdminTokenLite('AdminModules');
 
         $helper->tpl_vars = array(
@@ -124,9 +98,6 @@ class Smscodeverification extends Module
         return $helper->generateForm(array($this->getConfigForm()));
     }
 
-    /**
-     * Create the structure of your form.
-     */
     protected function getConfigForm()
     {
         return array(
@@ -176,15 +147,9 @@ class Smscodeverification extends Module
         );
     }
 
-    /**
-     * Set values for the inputs.
-     */
     protected function getConfigFormValues()
     {
         return array(
-            'SMSCODEVERIFICATION_LIVE_MODE' => Configuration::get('SMSCODEVERIFICATION_LIVE_MODE', true),
-            'SMSCODEVERIFICATION_ACCOUNT_EMAIL' => Configuration::get('SMSCODEVERIFICATION_ACCOUNT_EMAIL', 'contact@prestashop.com'),
-            'SMSCODEVERIFICATION_ACCOUNT_PASSWORD' => Configuration::get('SMSCODEVERIFICATION_ACCOUNT_PASSWORD', null),
         );
     }
 
@@ -193,30 +158,10 @@ class Smscodeverification extends Module
      */
     protected function postProcess()
     {
-        $form_values = $this->getConfigFormValues();
+        // $form_values = $this->getConfigFormValues();
 
-        foreach (array_keys($form_values) as $key) {
-            Configuration::updateValue($key, Tools::getValue($key));
+        // foreach (array_keys($form_values) as $key) {
+        //     Configuration::updateValue($key, Tools::getValue($key));
         }
-    }
-
-    /**
-    * Add the CSS & JavaScript files you want to be loaded in the BO.
-    */
-    public function hookDisplayBackOfficeHeader()
-    {
-        if (Tools::getValue('configure') == $this->name) {
-            $this->context->controller->addJS($this->_path.'views/js/back.js');
-            $this->context->controller->addCSS($this->_path.'views/css/back.css');
-        }
-    }
-
-    /**
-     * Add the CSS & JavaScript files you want to be added on the FO.
-     */
-    public function hookHeader()
-    {
-        $this->context->controller->addJS($this->_path.'/views/js/front.js');
-        $this->context->controller->addCSS($this->_path.'/views/css/front.css');
     }
 }
