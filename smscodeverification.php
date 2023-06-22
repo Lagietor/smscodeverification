@@ -162,6 +162,6 @@ class Smscodeverification extends Module
 
         // foreach (array_keys($form_values) as $key) {
         //     Configuration::updateValue($key, Tools::getValue($key));
-        }
+        // }
     }
 }
