@@ -31,6 +31,10 @@
  */
 $sql = array();
 
+$sql[] = 'DROP TABLE IF EXISTS ' . _DB_PREFIX_ . 'smscodeverification_product_options';
+
+$sql[] = 'DROP VIEW IF EXISTS ' . _DB_PREFIX_ . 'smscodeverification_product_list';
+
 foreach ($sql as $query) {
     if (Db::getInstance()->execute($query) == false) {
         return false;
