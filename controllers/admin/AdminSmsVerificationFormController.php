@@ -3,6 +3,7 @@
 require_once(_PS_MODULE_DIR_ . 'smscodeverification/smscodeverification.php');
 require_once(_PS_MODULE_DIR_ . 'smscodeverification/classes/SmsCodeVerificationFormList.php');
 require_once(_PS_MODULE_DIR_ . 'smscodeverification/classes/DbProductOptionsManagement.php');
+require_once(_PS_MODULE_DIR_ . 'smscodeverification/classes/SmsConfHelper.php');
 
 class AdminSmsVerificationFormController extends ModuleAdminController
 {
@@ -65,20 +66,23 @@ class AdminSmsVerificationFormController extends ModuleAdminController
 
     public function initContent()
     {
-        parent::initContent();
-
-        $content = $this->context->smarty->fetch(_PS_MODULE_DIR_ . 'smscodeverification/views/templates/admin/productsmsselection.tpl');
-
-        // dump(Configuration::get(Smscodeverification::SMS_AUTHENTICATION));
-        // die;
-        // TODO: naprawić system zapamiętywania poprzedniej opcji
-
         $this->context->smarty->assign([
-            'content' => $this->content . $content,
-            'sms_authentication' => Configuration::get(Smscodeverification::SMS_AUTHENTICATION)
+            'sms_authentication' => Configuration::get(Smscodeverification::SMS_AUTHENTICATION),
+            'authentication_key' => Configuration::get(Smscodeverification::AUTHENTICATION_KEY),
+            'send_code_url' => Configuration::get(Smscodeverification::SEND_CODE_URL),
+            'verify_code_url' => Configuration::get(Smscodeverification::VERIFY_CODE_URL),
         ]);
 
-        if (((bool)Tools::isSubmit('submitSmsCodeselectionModule')) == true) {
+        parent::initContent();
+
+        $apiDataForm = $this->context->smarty->fetch(_PS_MODULE_DIR_ . 'smscodeverification/views/templates/admin/apidataform.tpl');
+        $smsAuthenticationForm = $this->context->smarty->fetch(_PS_MODULE_DIR_ . 'smscodeverification/views/templates/admin/productsmsselection.tpl');
+
+        $this->context->smarty->assign([
+            'content' => $this->content . $smsAuthenticationForm . $apiDataForm,
+        ]);
+
+        if ((((bool)Tools::isSubmit('SmsActivationFormSubmit')) == true)) {
             Configuration::updateValue(Smscodeverification::SMS_AUTHENTICATION, Tools::getValue('sms_authentication'));
 
             $productOptions = new DbProductOptionsManagement();
@@ -90,11 +94,19 @@ class AdminSmsVerificationFormController extends ModuleAdminController
                         Tools::getValue('sms_authentication')
                     )
                 ) {
-                    $this->confirmations[] = ($this->l('Data was saved successfully'));
+                    $this->confirmations[] = ($this->l('Product data was saved successfully'));
                 }
             } else {
                 $this->errors[] = ($this->l('There is nothing to add'));
             }
+        }
+
+        if ((((bool)Tools::isSubmit('SmsAuthenticationDataFormSubmit')) == true)) {
+            Configuration::updateValue(Smscodeverification::AUTHENTICATION_KEY, Tools::getValue('authentication_key'));
+            Configuration::updateValue(Smscodeverification::SEND_CODE_URL, Tools::getValue('send_code_url'));
+            Configuration::updateValue(Smscodeverification::VERIFY_CODE_URL, Tools::getValue('verify_code_url'));
+
+            $this->confirmations[] = ($this->l('Api data was saved successfully'));
         }
     }
 }

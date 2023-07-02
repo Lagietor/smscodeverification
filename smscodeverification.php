@@ -32,6 +32,9 @@ class Smscodeverification extends Module
 {
     protected $config_form = false;
 
+    public const AUTHENTICATION_KEY = 'SMSCODEVERIFICATION_AUTHENTICATION_KEY';
+    public const SEND_CODE_URL = 'SMSCODEVERIFICATION_SEND_CODE_URL';
+    public const VERIFY_CODE_URL = 'SMSCODEVERIFICATION_VERIFY_CODE_URL';
     public const SMS_AUTHENTICATION = 'SMSCODEVERIFICATION_SMS_AUTHENTICATION';
     public const MODULE_ADMIN_CONTROLLER = 'AdminSmsVerificationForm';
 
@@ -58,6 +61,9 @@ class Smscodeverification extends Module
         include(dirname(__FILE__).'/sql/install.php');
 
         Configuration::updateValue(self::SMS_AUTHENTICATION, 0);
+        Configuration::updateValue(self::AUTHENTICATION_KEY, '');
+        Configuration::updateValue(self::VERIFY_CODE_URL, 'https://apitest.boncard.pl/api/authenticator/sms/verify');
+        Configuration::updateValue(self::SEND_CODE_URL, 'https://apitest.boncard.pl/api/authenticator/sms/send');
 
         return parent::install() &&
             $this->installTabs();
@@ -66,6 +72,11 @@ class Smscodeverification extends Module
     public function uninstall()
     {
         include(dirname(__FILE__).'/sql/uninstall.php');
+
+        Configuration::deleteByName(self::SMS_AUTHENTICATION);
+        Configuration::deleteByName(self::AUTHENTICATION_KEY);
+        Configuration::deleteByName(self::VERIFY_CODE_URL);
+        Configuration::deleteByName(self::SEND_CODE_URL);
 
         return parent::uninstall() &&
             $this->uninstallTabs();
