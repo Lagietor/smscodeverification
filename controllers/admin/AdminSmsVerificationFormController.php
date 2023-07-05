@@ -3,7 +3,6 @@
 require_once(_PS_MODULE_DIR_ . 'smscodeverification/smscodeverification.php');
 require_once(_PS_MODULE_DIR_ . 'smscodeverification/classes/SmsCodeVerificationFormList.php');
 require_once(_PS_MODULE_DIR_ . 'smscodeverification/classes/DbProductOptionsManagement.php');
-require_once(_PS_MODULE_DIR_ . 'smscodeverification/classes/SmsConfHelper.php');
 
 class AdminSmsVerificationFormController extends ModuleAdminController
 {
