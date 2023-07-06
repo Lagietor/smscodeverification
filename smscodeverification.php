@@ -65,6 +65,7 @@ class Smscodeverification extends Module
             $this->registerHook('displayPaymentTop') &&
             $this->registerHook('actionObjectOrderAddBefore') &&
             $this->registerHook('header') &&
+            $this->registerHook('actionCarrierProcess') &&
             $this->installTabs();
     }
 
@@ -125,7 +126,7 @@ class Smscodeverification extends Module
             // dump($smsForm->getProductsOption($p));
             if ($smsForm->getProductsOption($p) == true) {
                 $hasVerifiacationOn = true;
-                setcookie("verificationOn", true, time()+3600);
+                setcookie("verificationOn", true, time() + 3600);
                 break;
             }
         }
@@ -140,17 +141,12 @@ class Smscodeverification extends Module
 
     public function hookActionObjectOrderAddBefore()
     {
-        // dump($_COOKIE);
-        // die;
-        if($_COOKIE['verificationOn']) {
-            if ($_COOKIE['correctVerification']) {
-                setcookie("correctVerification", "", time() - 3600);
-                dump('wczytuje! jej!');
-                die;
-            }            
-            $this->context->controller->errors[] = 'errorrrrorororoor';
-            Tools::redirect($_SERVER['HTTP_REFERER']);
-
+        if ($_COOKIE['verificationOn']) {
+            if ($_COOKIE['smscode_error']) {
+                Tools::redirect($_SERVER['HTTP_REFERER']);
+            }
+            dump('przechodzi!');
+            die;
         }
 
         setcookie("verificationOn", "", time() - 3600);
@@ -161,5 +157,13 @@ class Smscodeverification extends Module
         if ($this->context->controller->php_self === 'order') {
             $this->context->controller->addJS($this->_path . 'views/js/paymentformvalidator.js');
         }
+    }
+
+    public function hookActionCarrierProcess()
+    {
+        if ($_COOKIE['smscode_error'])
+            $this->context->controller->errors[] = $_COOKIE['smscode_error'];
+        setcookie('smscode_error', '', time() - 3600);
+        return;
     }
 }

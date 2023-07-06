@@ -14,10 +14,11 @@
     <div style=" width:40%; display: inline-block; margin: 2px; padding: 2px; vertical align:
         middle;">
         <h3 style="display: inline-block; vertical align:middle;">{l s='SMS Code: ' mod='smscodeverification'}</h3>
-        <input type="text" name="sms_code" style="display: inline-block; vertical align:middle;">
+        <input type="text" name="sms_code" id="sms_code">
     </div>
     <div class="row buttons mb-2">
         <input class="btn btn-primary" type="button" id="send_code" value="{l s='Send SMS' mod='smscodeverification'}">
-        <input class="btn btn-secondary" type="button" id="verify_code" value="{l s='Verify' mod='smscodeverification'}" disabled>
+        <input class="btn btn-secondary" type="button" id="verify_code" value="{l s='Verify' mod='smscodeverification'}"
+            disabled>
     </div>
 </div>
