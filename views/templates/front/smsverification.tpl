@@ -16,4 +16,8 @@
         <h3 style="display: inline-block; vertical align:middle;">{l s='SMS Code: ' mod='smscodeverification'}</h3>
         <input type="text" name="sms_code" style="display: inline-block; vertical align:middle;">
     </div>
+    <div class="row buttons mb-2">
+        <input class="btn btn-primary" type="button" id="send_code" value="{l s='Send SMS' mod='smscodeverification'}">
+        <input class="btn btn-secondary" type="button" id="verify_code" value="{l s='Verify' mod='smscodeverification'}" disabled>
+    </div>
 </div>

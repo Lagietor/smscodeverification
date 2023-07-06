@@ -64,7 +64,6 @@ class Smscodeverification extends Module
         return parent::install() &&
             $this->registerHook('displayPaymentTop') &&
             $this->registerHook('actionObjectOrderAddBefore') &&
-            $this->registerHook('actionOrderStatusUpdate') &&
             $this->registerHook('header') &&
             $this->installTabs();
     }
@@ -115,49 +114,50 @@ class Smscodeverification extends Module
 
     public function hookDisplayPaymentTop($params)
     {
-        if (Configuration::get('SMSCODEVERIFICATION_SMS_AUTHENTICATION') == true) {
-            $smsForm = new SmsForm();
-            $cart = new Cart($params['cart']->id);
-            $hasVerifiacationOn = false;
+        $this->context->controller->errors[] = 'errorrrrorororoor';
 
-            $productsIds = $smsForm->getInCartProductsIds($cart);
-            foreach ($productsIds as $p) {
-                // dump($smsForm->getProductsOption($p));
-                if ($smsForm->getProductsOption($p) == true) {
-                    $hasVerifiacationOn = true;
-                    break;
-                }
+        $smsForm = new SmsForm();
+        $cart = new Cart($params['cart']->id);
+        $hasVerifiacationOn = false;
+
+        $productsIds = $smsForm->getInCartProductsIds($cart);
+        foreach ($productsIds as $p) {
+            // dump($smsForm->getProductsOption($p));
+            if ($smsForm->getProductsOption($p) == true) {
+                $hasVerifiacationOn = true;
+                setcookie("verificationOn", true, time()+3600);
+                break;
             }
-            if ($hasVerifiacationOn == true) {
-                $phone_number = $smsForm->getPhoneNumber($cart->id_address_delivery);
-                $this->context->smarty->assign('phone_number', $phone_number);
-                return $this->display(__FILE__, '/views/templates/front/smsverification.tpl');
-                // dump($phone_number);
-            }
-            // dump($productsIds);
         }
+        if ($hasVerifiacationOn == true) {
+            $phone_number = $smsForm->getPhoneNumber($cart->id_address_delivery);
+            $this->context->smarty->assign('phone_number', $phone_number);
+            return $this->display(__FILE__, '/views/templates/front/smsverification.tpl');
+            // dump($phone_number);
+        }
+        // dump($productsIds);
     }
 
-    public function hookActionOrderStatusUpdate($params)
+    public function hookActionObjectOrderAddBefore()
     {
-        // dump($params);
+        // dump($_COOKIE);
         // die;
-    }
+        if($_COOKIE['verificationOn']) {
+            if ($_COOKIE['correctVerification']) {
+                setcookie("correctVerification", "", time() - 3600);
+                dump('wczytuje! jej!');
+                die;
+            }            
+            $this->context->controller->errors[] = 'errorrrrorororoor';
+            Tools::redirect($_SERVER['HTTP_REFERER']);
 
-    public function hookActionObjectOrderAddBefore($params)
-    {
-        // $smsCode = Tools::getValue('sms_code');
-        // dump($params);
-        // dump(Tools::getAllValues());
-        // die;
+        }
 
-        // Tools::redirect($_SERVER['HTTP_REFERER']);
+        setcookie("verificationOn", "", time() - 3600);
     }
 
     public function hookHeader()
     {
-        // dump(Tools::getAllValues());
-        // die;
         if ($this->context->controller->php_self === 'order') {
             $this->context->controller->addJS($this->_path . 'views/js/paymentformvalidator.js');
         }
