@@ -1,28 +1,30 @@
 <?php
+
 /**
-* 2007-2023 PrestaShop
-*
-* NOTICE OF LICENSE
-*
-* This source file is subject to the Academic Free License (AFL 3.0)
-* that is bundled with this package in the file LICENSE.txt.
-* It is also available through the world-wide-web at this URL:
-* http://opensource.org/licenses/afl-3.0.php
-* If you did not receive a copy of the license and are unable to
-* obtain it through the world-wide-web, please send an email
-* to license@prestashop.com so we can send you a copy immediately.
-*
-* DISCLAIMER
-*
-* Do not edit or add to this file if you wish to upgrade PrestaShop to newer
-* versions in the future. If you wish to customize PrestaShop for your
-* needs please refer to http://www.prestashop.com for more information.
-*
-*  @author    PrestaShop SA <contact@prestashop.com>
-*  @copyright 2007-2023 PrestaShop SA
-*  @license   http://opensource.org/licenses/afl-3.0.php  Academic Free License (AFL 3.0)
-*  International Registered Trademark & Property of PrestaShop SA
-*/
+ * 2007-2023 PrestaShop
+ *
+ * NOTICE OF LICENSE
+ *
+ * This source file is subject to the Academic Free License (AFL 3.0)
+ * that is bundled with this package in the file LICENSE.txt.
+ * It is also available through the world-wide-web at this URL:
+ * http://opensource.org/licenses/afl-3.0.php
+ * If you did not receive a copy of the license and are unable to
+ * obtain it through the world-wide-web, please send an email
+ * to license@prestashop.com so we can send you a copy immediately.
+ *
+ * DISCLAIMER
+ *
+ * Do not edit or add to this file if you wish to upgrade PrestaShop to newer
+ * versions in the future. If you wish to customize PrestaShop for your
+ * needs please refer to http://www.prestashop.com for more information.
+ *
+ *  @author    PrestaShop SA <contact@prestashop.com>
+ *  @copyright 2007-2023 PrestaShop SA
+ *  @license   http://opensource.org/licenses/afl-3.0.php  Academic Free License (AFL 3.0)
+ *  International Registered Trademark & Property of PrestaShop SA
+ */
+require __DIR__ . '/classes/SmsForm.php';
 
 if (!defined('_PS_VERSION_')) {
     exit;
@@ -58,7 +60,7 @@ class Smscodeverification extends Module
 
     public function install()
     {
-        include(dirname(__FILE__).'/sql/install.php');
+        include(dirname(__FILE__) . '/sql/install.php');
 
         Configuration::updateValue(self::SMS_AUTHENTICATION, 0);
         Configuration::updateValue(self::AUTHENTICATION_KEY, '');
@@ -66,12 +68,16 @@ class Smscodeverification extends Module
         Configuration::updateValue(self::SEND_CODE_URL, 'https://apitest.boncard.pl/api/authenticator/sms/send');
 
         return parent::install() &&
+            $this->registerHook('displayPaymentTop') &&
+            $this->registerHook('actionObjectOrderAddBefore') &&
+            $this->registerHook('header') &&
+            $this->registerHook('actionCarrierProcess') &&
             $this->installTabs();
     }
 
     public function uninstall()
     {
-        include(dirname(__FILE__).'/sql/uninstall.php');
+        include(dirname(__FILE__) . '/sql/uninstall.php');
 
         Configuration::deleteByName(self::SMS_AUTHENTICATION);
         Configuration::deleteByName(self::AUTHENTICATION_KEY);
@@ -116,5 +122,56 @@ class Smscodeverification extends Module
     public function getContent()
     {
         Tools::redirectAdmin($this->context->link->getAdminLink(static::MODULE_ADMIN_CONTROLLER));
+    }
+
+    public function hookDisplayPaymentTop($params)
+    {
+        $smsForm = new SmsForm();
+        $cart = new Cart($params['cart']->id);
+        $hasVerifiacationOn = false;
+
+        $productsIds = $smsForm->getInCartProductsIds($cart);
+        foreach ($productsIds as $p) {
+            if ($smsForm->getProductsOption($p) == true) {
+                $hasVerifiacationOn = true;
+                setcookie("verificationOn", true, time() + 3600);
+                setcookie('smscode_error', 'Sms Code verification is required', time() + 3600);
+                break;
+            }
+        }
+        if ($hasVerifiacationOn == true) {
+            $phone_number = $smsForm->getPhoneNumber($cart->id_address_delivery);
+            $this->context->smarty->assign('phone_number', $phone_number);
+            return $this->display(__FILE__, '/views/templates/front/smsverification.tpl');
+        }
+    }
+
+    public function hookActionObjectOrderAddBefore()
+    {
+        if ($_COOKIE['verificationOn']) {
+            if ($_COOKIE['smscode_error']) {
+                Tools::redirect($_SERVER['HTTP_REFERER']);
+            }
+            dump('przechodzi!');
+            die;
+        }
+
+        setcookie("verificationOn", "", time() - 3600);
+    }
+
+    public function hookHeader()
+    {
+        if ($this->context->controller->php_self === 'order') {
+            $this->context->controller->addJS($this->_path . 'views/js/paymentformvalidator.js');
+        }
+    }
+
+    public function hookActionCarrierProcess()
+    {
+        if ($_COOKIE['smscode_error']) {
+            $this->context->controller->errors[] = $_COOKIE['smscode_error'];
+            setcookie('smscode_error', '', time() - 3600);
+            return;
+        }
     }
 }
