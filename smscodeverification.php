@@ -115,18 +115,16 @@ class Smscodeverification extends Module
 
     public function hookDisplayPaymentTop($params)
     {
-        $this->context->controller->errors[] = 'errorrrrorororoor';
-
         $smsForm = new SmsForm();
         $cart = new Cart($params['cart']->id);
         $hasVerifiacationOn = false;
 
         $productsIds = $smsForm->getInCartProductsIds($cart);
         foreach ($productsIds as $p) {
-            // dump($smsForm->getProductsOption($p));
             if ($smsForm->getProductsOption($p) == true) {
                 $hasVerifiacationOn = true;
                 setcookie("verificationOn", true, time() + 3600);
+                setcookie('smscode_error', 'Sms Code verification is required', time() + 3600);
                 break;
             }
         }
@@ -134,9 +132,7 @@ class Smscodeverification extends Module
             $phone_number = $smsForm->getPhoneNumber($cart->id_address_delivery);
             $this->context->smarty->assign('phone_number', $phone_number);
             return $this->display(__FILE__, '/views/templates/front/smsverification.tpl');
-            // dump($phone_number);
         }
-        // dump($productsIds);
     }
 
     public function hookActionObjectOrderAddBefore()
@@ -161,9 +157,10 @@ class Smscodeverification extends Module
 
     public function hookActionCarrierProcess()
     {
-        if ($_COOKIE['smscode_error'])
+        if ($_COOKIE['smscode_error']) {
             $this->context->controller->errors[] = $_COOKIE['smscode_error'];
-        setcookie('smscode_error', '', time() - 3600);
-        return;
+            setcookie('smscode_error', '', time() - 3600);
+            return;
+        }
     }
 }
