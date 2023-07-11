@@ -1,17 +1,18 @@
 $(document).ready(function () {
     $('#verify_code').click(function () {
-        value = $('#sms_code').val();
-        if (value != 333) {
+        code = $('#sms_code').val();
+        if (! isCodeValid(code)) {
             // TODO: dodać translacje wiadomości błędu w JS
-            document.cookie = "smscode_error=Wrong code; max-age=" + 60 * 60 * 24 * 7;
+            document.cookie = "sms_code_error=Wrong code; max-age=" + 60 * 60 * 24 * 7;
             invalidInputFocused();
         } else {
             validInputFocused();
-            document.cookie = 'smscode_error=; max-age=-99999999;';
+            document.cookie = 'sms_code_error=; max-age=-99999999;';
         }
     })
     $('#send_code').click(function () {
-        onPressedSendButton();
+        sendActionStyle();
+        sendSmsCode();
     })
 });
 
@@ -34,7 +35,7 @@ function invalidInputFocused()
     $('#sms_code_error_message').css("color", "red");
 }
 
-function onPressedSendButton()
+function sendActionStyle()
 {
     $('#verify_code').prop("disabled", false);
     $('#sms_code').prop("disabled", false);
@@ -46,10 +47,43 @@ function onPressedSendButton()
 
 function sendSmsCode()
 {
-    // TODO: create AJAX request to send SMS code
+    uuid = generateUUID();
+    email = 'pawelwiszniewski44@gmail.com';
+    phoneNumber = '730050273';
+    authKey = '1111112222222'; 
+
+    fetch('https://apitest.boncard.pl/api/authenticator/sms/send', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'x-request-secret': sha256(uuid + email + phoneNumber + authKey),
+            'x-request-name': "buying-for-prezent-idealny-send"
+        },
+        body: JSON.stringify({
+            'uuid': uuid,
+            'email': email,
+            'phone_number': phoneNumber
+        })
+    })
+    .then(res => {
+        if (res.ok) {
+            console.log('success')
+        } else {
+            console.log('failed')
+        }
+    })
+    .then(data => console.log(data))
 }
 
 function isCodeValid(code)
 {
-    // TODO: check if the code is correct 
+    return true;
 }
+
+function generateUUID() {
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+      const r = Math.random() * 16 | 0;
+      const v = c === 'x' ? r : (r & 0x3 | 0x8);
+      return v.toString(16);
+    });
+  }

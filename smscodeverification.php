@@ -135,7 +135,7 @@ class Smscodeverification extends Module
             if ($smsForm->getProductsOption($p) == true) {
                 $hasVerifiacationOn = true;
                 setcookie("verificationOn", true, time() + 3600);
-                setcookie('smscode_error', 'Sms Code verification is required', time() + 3600);
+                // setcookie('sms_code_error', 'Sms Code verification is required', time() + 3600);
                 break;
             }
         }
@@ -149,7 +149,7 @@ class Smscodeverification extends Module
     public function hookActionObjectOrderAddBefore()
     {
         if ($_COOKIE['verificationOn']) {
-            if ($_COOKIE['smscode_error']) {
+            if ($_COOKIE['sms_code_error']) {
                 Tools::redirect($_SERVER['HTTP_REFERER']);
             }
             dump('przechodzi!');
@@ -163,14 +163,15 @@ class Smscodeverification extends Module
     {
         if ($this->context->controller->php_self === 'order') {
             $this->context->controller->addJS($this->_path . 'views/js/paymentformvalidator.js');
+            $this->context->controller->addJS($this->_path . 'views/js/sha256.js');
         }
     }
 
     public function hookActionCarrierProcess()
     {
-        if ($_COOKIE['smscode_error']) {
-            $this->context->controller->errors[] = $_COOKIE['smscode_error'];
-            setcookie('smscode_error', '', time() - 3600);
+        if ($_COOKIE['sms_code_error']) {
+            $this->context->controller->errors[] = $_COOKIE['sms_code_error'];
+            setcookie('sms_code_error', '', time() - 3600);
             return;
         }
     }
