@@ -141,7 +141,9 @@ class Smscodeverification extends Module
         }
         if ($hasVerifiacationOn == true) {
             $phone_number = $smsForm->getPhoneNumber($cart->id_address_delivery);
+            $this->context->smarty->assign('email', $params['cookie']->email);
             $this->context->smarty->assign('phone_number', $phone_number);
+            // $this->context->smarty->assign('authKey', self::AUTHENTICATION_KEY);
             return $this->display(__FILE__, '/views/templates/front/smsverification.tpl');
         }
     }
@@ -161,6 +163,7 @@ class Smscodeverification extends Module
 
     public function hookHeader()
     {
+
         if ($this->context->controller->php_self === 'order') {
             $this->context->controller->addJS($this->_path . 'views/js/paymentformvalidator.js');
             $this->context->controller->addJS($this->_path . 'views/js/sha256.js');
