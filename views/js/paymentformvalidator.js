@@ -1,21 +1,29 @@
 $(document).ready(function () {
-    $('#verify_code').click(function () {
-        value = $('#sms_code').val();
-        if (value != 333) {
+    disableSubmitButton();
+
+    $('#sms_code').focusout(function () {
+        code = $('#sms_code').val();
+        // if (! isCodeValid(code)) {
+        if (code != '333') {
             // TODO: dodać translacje wiadomości błędu w JS
-            document.cookie = "smscode_error=Wrong code; max-age=" + 60 * 60 * 24 * 7;
-            invalidInputFocused();
+            document.cookie = "sms_code_error=Wrong code; max-age=" + 60 * 60 * 24 * 7;
+            invalidInput();
         } else {
-            validInputFocused();
-            document.cookie = 'smscode_error=; max-age=-99999999;';
+            validInput();
+            // activateSubmitButton();
+            document.cookie = 'sms_code_error=; max-age=-99999999;';
         }
     })
+
     $('#send_code').click(function () {
-        onPressedSendButton();
+        // activateSubmitButton();
+        // getDataAjax();
+        sendActionStyle();
+        sendSmsCode();
     })
 });
 
-function validInputFocused()
+function validInput()
 {
     $('#sms_code').css("outline", "none");
     $('#sms_code').css("border", "3px solid #53d572");
@@ -24,7 +32,7 @@ function validInputFocused()
     $('#sms_code_error_message').hide();
 }
 
-function invalidInputFocused()
+function invalidInput()
 {
     $('#sms_code').css("outline", "none");
     $('#sms_code').css("border", "3px solid #f59990");
@@ -34,7 +42,7 @@ function invalidInputFocused()
     $('#sms_code_error_message').css("color", "red");
 }
 
-function onPressedSendButton()
+function sendActionStyle()
 {
     $('#verify_code').prop("disabled", false);
     $('#sms_code').prop("disabled", false);
@@ -44,12 +52,65 @@ function onPressedSendButton()
     $('#sms_code_desc').hide();
 }
 
+function disableSubmitButton()
+{
+    $(':submit').prop("disabled", true);
+    $(':submit').addClass('disabled');
+}
+
+function activateSubmitButton()
+{
+    $(':submit').prop("disabled", false);
+    $(':submit').removeClass('disabled');
+}
+
 function sendSmsCode()
 {
-    // TODO: create AJAX request to send SMS code
+    uuid = generateUUID();
+    email = "pawelwiszniewski44@gmail.com";
+    phoneNumber = "730050273";
+
+    authKey = atob($('#auth_key').html());
+    sendUrl = atob($('#send_url').html());
+    verifyUrl = atob($('#verify_url').html());
+
+    fetch("https://apitest.boncard.pl/api/authenticator/sms/send", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "x-request-secret": sha256(uuid + email + phoneNumber + authKey),
+            "x-request-name": "buying-for-prezent-idealny-send"
+        },
+        body: JSON.stringify({
+            uuid: uuid,
+            email: email,
+            phone_number: phoneNumber
+        })
+    })
+    .then(data => console.log(data))
+    // .then(data => console.log(data))
 }
 
 function isCodeValid(code)
 {
-    // TODO: check if the code is correct 
+    return true;
+}
+
+function generateUUID() {
+    return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function(c) {
+      const r = Math.random() * 16 | 0;
+      const v = c === 'x' ? r : (r & 0x3 | 0x8);
+      return v.toString(16);
+    });
+}
+
+function getDataAjax()
+{
+    fetch('apidataajax.php')
+    .then(function(response) {
+        return response.json();
+    })
+    .then(function(data) {
+        console.log(data);
+    })
 }

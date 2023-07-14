@@ -5,7 +5,7 @@
     </div>
 
     <div style="width:40%; display: inline-block; margin: 2px; padding: 2px; vertical align: middle;">
-        <h3>{l s='Phone Number: ' mod='smscodeverification'}{$phone_number}</h3>
+        <h3> {l s='Phone Number: ' mod='smscodeverification'}{$phoneNumber} </h3>
     </div>
     <div style="width:40%; display: inline-block; margin: 2px; padding: 2px; vertical align: middle;">
     {* po co tu jest ten div??? *}
@@ -19,7 +19,12 @@
     </div>
     <div class="row buttons mb-2">
         <input class="btn btn-primary" type="button" id="send_code" value="{l s='Send SMS' mod='smscodeverification'}">
-        <input class="btn btn-secondary" type="button" id="verify_code" value="{l s='Verify' mod='smscodeverification'}"
-            disabled>
+        {* <input class="btn btn-secondary" type="button" id="verify_code" value="{l s='Verify' mod='smscodeverification'}" *}
+    </div>
+
+    <div hidden>
+        <p id="auth_key"> {$authKey} </p>
+        <p id="send_url">  {$sendUrl} </p>
+        <p id="verify_url"> {$verifyUrl} </p>
     </div>
 </div>

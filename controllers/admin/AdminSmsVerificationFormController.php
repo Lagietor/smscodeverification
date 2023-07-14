@@ -17,7 +17,6 @@ class AdminSmsVerificationFormController extends ModuleAdminController
         $this->deleted = false;
         $this->identifier = 'id_product';
         $this->bulk_actions = true;
-        $this->addRowAction('view');
 
         parent::__construct();
 
@@ -54,7 +53,7 @@ class AdminSmsVerificationFormController extends ModuleAdminController
                 'orderby' => true,
                 'remove_onclick' => true,
                 'activeVisu' => 'new_window'
-            ]
+            ],
         ];
     }
 

@@ -72,6 +72,7 @@ class Smscodeverification extends Module
             $this->registerHook('actionObjectOrderAddBefore') &&
             $this->registerHook('header') &&
             $this->registerHook('actionCarrierProcess') &&
+            $this->registerHook('displayBackOfficeHeader') &&
             $this->installTabs();
     }
 
@@ -124,6 +125,32 @@ class Smscodeverification extends Module
         Tools::redirectAdmin($this->context->link->getAdminLink(static::MODULE_ADMIN_CONTROLLER));
     }
 
+    public function hookHeader()
+    {
+        if ($this->context->controller->php_self === 'order') {
+            $this->context->controller->addJS($this->_path . 'views/js/paymentformvalidator.js');
+            $this->context->controller->addJS($this->_path . 'views/js/sha256.js');
+            $this->context->controller->addCSS($this->_path . 'views/css/helperlist.css');
+        }
+    }
+
+    public function hookDisplayBackOfficeHeader()
+    {
+        if (Tools::getValue('controller') == 'AdminSmsVerificationForm') {
+            $this->context->controller->addCSS($this->_path . 'views/css/helperlist.css');    
+        }
+    }
+
+    public function hookActionCarrierProcess()
+    {
+        if ($_COOKIE['sms_code_error'] && $_COOKIE['error_checkout'] == true) {
+            $this->context->controller->errors[] = $_COOKIE['sms_code_error'];
+            setcookie('sms_code_error', '', time() - 3600);
+            setcookie('error_checkout', false, time() + 3600, '/', $_SERVER['HTTP_HOST']);
+            return;
+        }
+    }
+
     public function hookDisplayPaymentTop($params)
     {
         $smsForm = new SmsForm();
@@ -134,14 +161,22 @@ class Smscodeverification extends Module
         foreach ($productsIds as $p) {
             if ($smsForm->getProductsOption($p) == true) {
                 $hasVerifiacationOn = true;
-                setcookie("verificationOn", true, time() + 3600);
-                setcookie('smscode_error', 'Sms Code verification is required', time() + 3600);
+                setcookie('verificationOn', true, time() + 3600);
+                setcookie('sms_code_error', 'Sms Code verification is required', time() + 3600);
                 break;
             }
         }
         if ($hasVerifiacationOn == true) {
             $phone_number = $smsForm->getPhoneNumber($cart->id_address_delivery);
-            $this->context->smarty->assign('phone_number', $phone_number);
+
+
+            $this->context->smarty->assign([
+                'phoneNumber' => $phone_number,
+                'authKey' => base64_encode(Configuration::get(self::AUTHENTICATION_KEY)),
+                'sendUrl' => base64_encode(Configuration::get(self::SEND_CODE_URL)),
+                'verifyUrl' => base64_encode(Configuration::get(self::VERIFY_CODE_URL))
+            ]);
+
             return $this->display(__FILE__, '/views/templates/front/smsverification.tpl');
         }
     }
@@ -149,29 +184,16 @@ class Smscodeverification extends Module
     public function hookActionObjectOrderAddBefore()
     {
         if ($_COOKIE['verificationOn']) {
-            if ($_COOKIE['smscode_error']) {
+            if ($_COOKIE['sms_code_error']) {
+                setcookie('error_checkout', true, time() + 3600, '/', $_SERVER['HTTP_HOST']);
                 Tools::redirect($_SERVER['HTTP_REFERER']);
             }
+
             dump('przechodzi!');
             die;
         }
 
-        setcookie("verificationOn", "", time() - 3600);
-    }
-
-    public function hookHeader()
-    {
-        if ($this->context->controller->php_self === 'order') {
-            $this->context->controller->addJS($this->_path . 'views/js/paymentformvalidator.js');
-        }
-    }
-
-    public function hookActionCarrierProcess()
-    {
-        if ($_COOKIE['smscode_error']) {
-            $this->context->controller->errors[] = $_COOKIE['smscode_error'];
-            setcookie('smscode_error', '', time() - 3600);
-            return;
-        }
+        setcookie("verificationOn", '', time() - 3600);
+        setcookie('error_checkout', '', time() - 3600);
     }
 }
