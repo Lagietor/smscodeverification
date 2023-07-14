@@ -25,10 +25,23 @@
 */
 $sql = array();
 
-$sql[] = 'CREATE TABLE IF NOT EXISTS `' . _DB_PREFIX_ . 'smscodeverification` (
-    `id_smscodeverification` int(11) NOT NULL AUTO_INCREMENT,
-    PRIMARY KEY  (`id_smscodeverification`)
+$sql[] = 'CREATE TABLE IF NOT EXISTS `' . _DB_PREFIX_ . 'smscodeverification_product_options` (
+    `id` int PRIMARY KEY AUTO_INCREMENT NOT NULL,
+    `id_product` int UNIQUE NOT NULL,
+    `active` boolean DEFAULT 0
 ) ENGINE=' . _MYSQL_ENGINE_ . ' DEFAULT CHARSET=utf8;';
+
+$sql[] = "CREATE OR REPLACE VIEW " . _DB_PREFIX_ . "smscodeverification_product_list
+        AS
+        SELECT DISTINCT
+        p.id_product, pl.name AS 'product_name', pc.name AS 'category_name' , 
+        IF(s.active, true, false) AS 'sms_authentication'
+        FROM 
+        " . _DB_PREFIX_ . "product p
+        JOIN " . _DB_PREFIX_ . "product_lang pl ON p.id_product = pl.id_product AND pl.id_lang = " . Configuration::get('PS_LANG_DEFAULT') . "
+        JOIN " . _DB_PREFIX_ . "category_lang pc ON p.id_category_default = pc.id_category AND pc.id_lang = " . Configuration::get('PS_LANG_DEFAULT') . "
+        LEFT JOIN " . _DB_PREFIX_ . "smscodeverification_product_options s ON p.id_product = s.id_product
+        ORDER BY p.id_product ASC";
 
 foreach ($sql as $query) {
     if (Db::getInstance()->execute($query) == false) {
