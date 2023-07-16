@@ -14,11 +14,14 @@
                     value="{l s='Send SMS' mod='smscodeverification'}">
             </div>
             <div class="col-md-6">
-                <input type="text" name="sms_code" id="sms_code" placeholder="{l s=' SMS Code: ' mod='smscodeverification'}" disabled>
+                <input type="text" name="sms_code" id="sms_code" placeholder="{l s='SMS Code' mod='smscodeverification'}" disabled>
                 <span id="sms_code_desc" class="form-text text-muted">
-                    {l s='Send sms first to input the code' mod='wishdeliveryselection'} </span>
+                    {l s='Send sms first to input the code' mod='smscodeverification'} </span>
+                <br>
                 <span name="sms_code_error_message" id="sms_code_error_message"
-                    style="display: none">{l s='Invalid code' mod='wishdeliveryselection'}</span>
+                    style="display: none">{l s='Invalid code' mod='smscodeverification'}
+                </span>
+                <span  style="display: none" id="sms_code_error_message_cookie">{l s='Wrong code' mod='smscodeverification'}</span>
             </div>
         </div>
     </div>

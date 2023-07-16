@@ -1,12 +1,12 @@
 $(document).ready(function () {
-    disableSubmitButton();
+    // disableSubmitButton();
 
     $('#sms_code').focusout(function () {
         code = $('#sms_code').val();
         // if (! isCodeValid(code)) {
         if (code != '333') {
-            // TODO: dodać translacje wiadomości błędu w JS
-            document.cookie = "sms_code_error=Wrong code; max-age=" + 60 * 60 * 24 * 7;
+            var cookieErrorMessage = $('#sms_code_error_message_cookie').text();
+            document.cookie = "sms_code_error=" + cookieErrorMessage + "; max-age=" + 60 * 60 * 24 * 7;
             invalidInput();
         } else {
             validInput();
@@ -17,7 +17,6 @@ $(document).ready(function () {
 
     $('#send_code').click(function () {
         // activateSubmitButton();
-        // getDataAjax();
         sendActionStyle();
         sendSmsCode();
     })
@@ -44,24 +43,20 @@ function invalidInput()
 
 function sendActionStyle()
 {
-    $('#verify_code').prop("disabled", false);
     $('#sms_code').prop("disabled", false);
-    $('#verify_code').removeClass('btn-secondary');
-    $('#verify_code').css("transition", "0.5s");
-    $('#verify_code').addClass('btn-primary');
     $('#sms_code_desc').hide();
 }
 
 function disableSubmitButton()
 {
-    $(':submit').prop("disabled", true);
-    $(':submit').addClass('disabled');
+    // $(':submit').prop("disabled", true);
+    // $(':submit').addClass('disabled');
 }
 
 function activateSubmitButton()
 {
-    $(':submit').prop("disabled", false);
-    $(':submit').removeClass('disabled');
+    // $(':submit').prop("disabled", false);
+    // $(':submit').removeClass('disabled');
 }
 
 function sendSmsCode()
@@ -74,21 +69,40 @@ function sendSmsCode()
     sendUrl = atob($('#send_url').html());
     verifyUrl = atob($('#verify_url').html());
 
-    fetch("https://apitest.boncard.pl/api/authenticator/sms/send", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-            "x-request-secret": sha256(uuid + email + phoneNumber + authKey),
-            "x-request-name": "buying-for-prezent-idealny-send"
-        },
-        body: JSON.stringify({
-            uuid: uuid,
-            email: email,
-            phone_number: phoneNumber
-        })
+    const headers = {
+        "Content-Type": "application/json",
+        "x-request-secret": sha256(uuid + email + phoneNumber + authKey),
+        "x-request-name": "buying-for-prezent-idealny-send"
+      };
+    
+    const body = {
+        uuid: uuid,
+        email: email,
+        phone_number: phoneNumber
+    };
+
+    fetch(sendUrl, {
+    method: 'POST',
+    headers: headers,
+    body: JSON.stringify(body)
     })
-    .then(data => console.log(data))
-    // .then(data => console.log(data))
+    .then(response => {
+        // Check if the response was successful
+        if (!response.ok) {
+        throw new Error('Network response was not ok');
+        }
+        // Parse the response as JSON
+        return response.json();
+    })
+    .then(responseData => {
+        // Work with the response data
+        console.log(responseData);
+        // Handle the response data
+    })
+    .catch(error => {
+        // Handle any errors
+        console.error('Error:', error);
+    });
 }
 
 function isCodeValid(code)
@@ -102,15 +116,4 @@ function generateUUID() {
       const v = c === 'x' ? r : (r & 0x3 | 0x8);
       return v.toString(16);
     });
-}
-
-function getDataAjax()
-{
-    fetch('apidataajax.php')
-    .then(function(response) {
-        return response.json();
-    })
-    .then(function(data) {
-        console.log(data);
-    })
 }

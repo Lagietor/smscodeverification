@@ -53,7 +53,7 @@ class Smscodeverification extends Module
         parent::__construct();
 
         $this->displayName = $this->l('Sms Code Verification');
-        $this->description = $this->l('Adds new field to chosen products in delivery form to check sms code verification ');
+        $this->description = $this->l('Adds new field to chosen products in payment form to check sms code verification ');
 
         $this->ps_versions_compliancy = array('min' => '1.6', 'max' => _PS_VERSION_);
     }
