@@ -30,6 +30,11 @@ if (!defined('_PS_VERSION_')) {
     exit;
 }
 
+use Defuse\Crypto\Crypto;
+use Defuse\Crypto\Key;
+
+use RandomLib\Source\Sodium;
+
 class Smscodeverification extends Module
 {
     protected $config_form = false;
@@ -39,6 +44,7 @@ class Smscodeverification extends Module
     public const VERIFY_CODE_URL = 'SMSCODEVERIFICATION_VERIFY_CODE_URL';
     public const SMS_AUTHENTICATION = 'SMSCODEVERIFICATION_SMS_AUTHENTICATION';
     public const MODULE_ADMIN_CONTROLLER = 'AdminSmsVerificationForm';
+    public const ENCRYPTION_KEY = "SMSCODEVERIFICATION_ENCRYPTION_KEY";
 
     public function __construct()
     {
@@ -128,8 +134,12 @@ class Smscodeverification extends Module
     public function hookHeader()
     {
         if ($this->context->controller->php_self === 'order') {
+            $this->context->controller->addJS($this->_path . 'views/js/paymentform.js');
             $this->context->controller->addJS($this->_path . 'views/js/paymentformvalidator.js');
+            $this->context->controller->addJS($this->_path . 'views/js/paymentformstyle.js');
+            $this->context->controller->addJS($this->_path . 'views/js/paymentformAPI.js');
             $this->context->controller->addJS($this->_path . 'views/js/sha256.js');
+            $this->context->controller->addJS($this->_path . 'nacl.min.js');
             $this->context->controller->addCSS($this->_path . 'views/css/helperlist.css');
         }
     }
@@ -167,14 +177,29 @@ class Smscodeverification extends Module
             }
         }
         if ($hasVerifiacationOn == true) {
-            $phone_number = $smsForm->getPhoneNumber($cart->id_address_delivery);
+            $phoneNumber = $smsForm->getPhoneNumber($cart->id_address_delivery);
+            $email = $params['cookie']->email;
 
+            $data = [
+                $phoneNumber,
+                $email,
+                Configuration::get(self::AUTHENTICATION_KEY),
+                Configuration::get(self::SEND_CODE_URL),
+                Configuration::get(self::VERIFY_CODE_URL)
+            ];
 
+            $data = json_encode($data);
+            $encryptionKey = sodium_crypto_secretbox_keygen();
+
+            $nonce = random_bytes(ParagonIE_Sodium_Compat::CRYPTO_SECRETBOX_NONCEBYTES);
+            $encryptedData = sodium_crypto_secretbox($data, $nonce, $encryptionKey);
+
+            setcookie('encryptionKey', base64_encode($encryptionKey), time() + 3600);
+            setcookie('nonce', base64_encode($nonce), time() + 3600);
+            setcookie('data', base64_encode($encryptedData), time() + 3600);
+            
             $this->context->smarty->assign([
-                'phoneNumber' => $phone_number,
-                'authKey' => base64_encode(Configuration::get(self::AUTHENTICATION_KEY)),
-                'sendUrl' => base64_encode(Configuration::get(self::SEND_CODE_URL)),
-                'verifyUrl' => base64_encode(Configuration::get(self::VERIFY_CODE_URL))
+                'phoneNumber' => $phoneNumber
             ]);
 
             return $this->display(__FILE__, '/views/templates/front/smsverification.tpl');
@@ -183,6 +208,9 @@ class Smscodeverification extends Module
 
     public function hookActionObjectOrderAddBefore()
     {
+        // dump($_COOKIE);
+        // die;
+
         if ($_COOKIE['verificationOn']) {
             if ($_COOKIE['sms_code_error']) {
                 setcookie('error_checkout', true, time() + 3600, '/', $_SERVER['HTTP_HOST']);

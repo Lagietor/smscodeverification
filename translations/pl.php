@@ -20,7 +20,7 @@ $_MODULE['<{smscodeverification}prestashop>productsmsselection_c4536bbd4a1cc2f1d
 $_MODULE['<{smscodeverification}prestashop>productsmsselection_96c6b3e7f2e92bad8d5c7f351990cccd'] = 'Włącz Autentykacje SMS';
 $_MODULE['<{smscodeverification}prestashop>productsmsselection_c9cc8cce247e49bae79f15173ce97354'] = 'Zapisz';
 $_MODULE['<{smscodeverification}prestashop>smsverification_6450edc3c5dbd8b2e468557f216bc11d'] = 'Weryfikacja SMS:';
-$_MODULE['<{smscodeverification}prestashop>smsverification_33f7fcf37e70446dfc90d74da32cd9bc'] = 'Numer telefonu:';
+$_MODULE['<{smscodeverification}prestashop>smsverification_33f7fcf37e70446dfc90d74da32cd9bc'] = 'Numer telefonu: ';
 $_MODULE['<{smscodeverification}prestashop>smsverification_a76483d7286ffbd53a010f1904231f80'] = 'Wyślij SMS';
 $_MODULE['<{smscodeverification}prestashop>smsverification_85137b80c8b18a95c10a6c50dfe1d59c'] = 'Kod SMS';
 $_MODULE['<{smscodeverification}prestashop>smsverification_ee4215e0a9285ebb7452138d232ea590'] = 'Wyślij kod sms, aby móc go wprowadzić';

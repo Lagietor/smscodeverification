@@ -1,116 +1,48 @@
-$(document).ready(function () {
-    // disableSubmitButton();
-
-    $('#sms_code').focusout(function () {
-        code = $('#sms_code').val();
-        // if (! isCodeValid(code)) {
-        if (code != '333') {
-            var cookieErrorMessage = $('#sms_code_error_message_cookie').text();
-            document.cookie = "sms_code_error=" + cookieErrorMessage + "; max-age=" + 60 * 60 * 24 * 7;
-            invalidInput();
-        } else {
-            validInput();
-            // activateSubmitButton();
-            document.cookie = 'sms_code_error=; max-age=-99999999;';
-        }
-    })
-
-    $('#send_code').click(function () {
-        // activateSubmitButton();
-        sendActionStyle();
-        sendSmsCode();
-    })
-});
-
-function validInput()
+function isExpired(expireDate)
 {
-    $('#sms_code').css("outline", "none");
-    $('#sms_code').css("border", "3px solid #53d572");
-    $('#sms_code').css("transition", "0.5s");
-    $('#sms_code').css("background-color", "#b8f2b3");
-    $('#sms_code_error_message').hide();
+    var currentDate = new Date();
+    expireDate = new Date(expireDate);
+
+    return (currentDate > expireDate);
 }
 
-function invalidInput()
+function getEncryptedDataFromServer()
 {
-    $('#sms_code').css("outline", "none");
-    $('#sms_code').css("border", "3px solid #f59990");
-    $('#sms_code').css("transition", "0.5s");
-    $('#sms_code').css("background-color", "#f7bdb7");
-    $('#sms_code_error_message').show();
-    $('#sms_code_error_message').css("color", "red");
+    nonce = getCookieValue('nonce');
+    data = getCookieValue('data');
+    encryptionKey = getCookieValue('encryptionKey');
+
+    var nonce = Uint8Array.from(atob(nonce), c => c.charCodeAt(0));
+    var encryptedData = Uint8Array.from(atob(data), c => c.charCodeAt(0));
+    var encryptionKey = Uint8Array.from(atob(encryptionKey), c => c.charCodeAt(0));
+
+    var decryptedData = nacl.secretbox.open(encryptedData, nonce, encryptionKey);
+    var jsonData = decryptedData ? new TextDecoder().decode(decryptedData) : null;
+
+    // [0] => phoneNumber, [1] => email, [2] => authKey, [3] => sendUrl, [4] => verifyUrl
+    return jsonData ? JSON.parse(jsonData) : null;
 }
 
-function sendActionStyle()
+function getCookieValue(name) 
 {
-    $('#sms_code').prop("disabled", false);
-    $('#sms_code_desc').hide();
+    var cookieString = document.cookie;
+
+    var cookieArr = cookieString.split(';');
+  
+    for (let i = 0; i < cookieArr.length; i++) {
+      var cookiePair = cookieArr[i].split('=');
+      var cookieName = cookiePair[0].trim();
+  
+      if (cookieName === name) {
+        return decodeURIComponent(cookiePair[1]);
+      }
+    }
+  
+    return null;
 }
 
-function disableSubmitButton()
+function generateUUID()
 {
-    // $(':submit').prop("disabled", true);
-    // $(':submit').addClass('disabled');
-}
-
-function activateSubmitButton()
-{
-    // $(':submit').prop("disabled", false);
-    // $(':submit').removeClass('disabled');
-}
-
-function sendSmsCode()
-{
-    uuid = generateUUID();
-    email = "pawelwiszniewski44@gmail.com";
-    phoneNumber = "730050273";
-
-    authKey = atob($('#auth_key').html());
-    sendUrl = atob($('#send_url').html());
-    verifyUrl = atob($('#verify_url').html());
-
-    const headers = {
-        "Content-Type": "application/json",
-        "x-request-secret": sha256(uuid + email + phoneNumber + authKey),
-        "x-request-name": "buying-for-prezent-idealny-send"
-      };
-    
-    const body = {
-        uuid: uuid,
-        email: email,
-        phone_number: phoneNumber
-    };
-
-    fetch(sendUrl, {
-    method: 'POST',
-    headers: headers,
-    body: JSON.stringify(body)
-    })
-    .then(response => {
-        // Check if the response was successful
-        if (!response.ok) {
-        throw new Error('Network response was not ok');
-        }
-        // Parse the response as JSON
-        return response.json();
-    })
-    .then(responseData => {
-        // Work with the response data
-        console.log(responseData);
-        // Handle the response data
-    })
-    .catch(error => {
-        // Handle any errors
-        console.error('Error:', error);
-    });
-}
-
-function isCodeValid(code)
-{
-    return true;
-}
-
-function generateUUID() {
     return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function(c) {
       const r = Math.random() * 16 | 0;
       const v = c === 'x' ? r : (r & 0x3 | 0x8);
