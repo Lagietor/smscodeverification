@@ -30,9 +30,6 @@ if (!defined('_PS_VERSION_')) {
     exit;
 }
 
-use Defuse\Crypto\Crypto;
-use Defuse\Crypto\Key;
-
 use RandomLib\Source\Sodium;
 
 class Smscodeverification extends Module
@@ -44,7 +41,6 @@ class Smscodeverification extends Module
     public const VERIFY_CODE_URL = 'SMSCODEVERIFICATION_VERIFY_CODE_URL';
     public const SMS_AUTHENTICATION = 'SMSCODEVERIFICATION_SMS_AUTHENTICATION';
     public const MODULE_ADMIN_CONTROLLER = 'AdminSmsVerificationForm';
-    public const ENCRYPTION_KEY = "SMSCODEVERIFICATION_ENCRYPTION_KEY";
 
     public function __construct()
     {
@@ -171,7 +167,7 @@ class Smscodeverification extends Module
         foreach ($productsIds as $p) {
             if ($smsForm->getProductsOption($p) == true) {
                 $hasVerifiacationOn = true;
-                setcookie('verificationOn', true, time() + 3600);
+                setcookie('verificationOn', true, time() + 3600, '/', $_SERVER['HTTP_HOST']);
                 setcookie('sms_code_error', 'Sms Code verification is required', time() + 3600);
                 break;
             }
@@ -194,12 +190,13 @@ class Smscodeverification extends Module
             $nonce = random_bytes(ParagonIE_Sodium_Compat::CRYPTO_SECRETBOX_NONCEBYTES);
             $encryptedData = sodium_crypto_secretbox($data, $nonce, $encryptionKey);
 
-            setcookie('encryptionKey', base64_encode($encryptionKey), time() + 3600);
-            setcookie('nonce', base64_encode($nonce), time() + 3600);
-            setcookie('data', base64_encode($encryptedData), time() + 3600);
-            
+            setcookie('encryptionKey', base64_encode($encryptionKey), time() + 3600, '/', $_SERVER['HTTP_HOST']);
+            setcookie('nonce', base64_encode($nonce), time() + 3600, '/', $_SERVER['HTTP_HOST']);
+            setcookie('data', base64_encode($encryptedData), time() + 3600, '/', $_SERVER['HTTP_HOST']);
+
             $this->context->smarty->assign([
-                'phoneNumber' => $phoneNumber
+                'phoneNumber' => $phoneNumber,
+                'smsCode' => $_COOKIE['sms_code']
             ]);
 
             return $this->display(__FILE__, '/views/templates/front/smsverification.tpl');
@@ -208,20 +205,26 @@ class Smscodeverification extends Module
 
     public function hookActionObjectOrderAddBefore()
     {
-        // dump($_COOKIE);
-        // die;
-
         if ($_COOKIE['verificationOn']) {
             if ($_COOKIE['sms_code_error']) {
                 setcookie('error_checkout', true, time() + 3600, '/', $_SERVER['HTTP_HOST']);
                 Tools::redirect($_SERVER['HTTP_REFERER']);
             }
 
-            dump('przechodzi!');
-            die;
+            $this->dd('przechodzi!!');
+            setcookie('verificationOn', '', time() - 3600, '/', $_SERVER['HTTP_HOST']);
+            setcookie('error_checkout', '', time() - 3600, '/', $_SERVER['HTTP_HOST']);
+            setcookie('sms_code', '', time() - 3600, '/', $_SERVER['HTTP_HOST']);
+            setcookie('encryptionKey', '', time() - 3600, '/', $_SERVER['HTTP_HOST']);
+            setcookie('nonce', '', time() - 3600, '/', $_SERVER['HTTP_HOST']);
+            setcookie('data', '', time() - 3600, '/', $_SERVER['HTTP_HOST']);
         }
+    }
 
-        setcookie("verificationOn", '', time() - 3600);
-        setcookie('error_checkout', '', time() - 3600);
+    // do usunięcia później
+    public function dd($test) 
+    {
+        dump($test);
+        die;
     }
 }

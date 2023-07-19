@@ -43,7 +43,7 @@ function isCodeValid(email, phoneNumber, code, authKey, verifyUrl)
         "Content-Type": "application/json",
         "x-request-secret": sha256(uuid + email + phoneNumber + code + authKey),
         "x-request-name": "buying-for-prezent-idealny-verify"
-      };
+    };
     
     const body = {
         uuid: uuid,

@@ -14,7 +14,12 @@
                     value="{l s='Send SMS' mod='smscodeverification'}">
             </div>
             <div class="col-md-6">
-                <input type="text" name="sms_code" id="sms_code" placeholder="{l s='SMS Code' mod='smscodeverification'}" form="conditions-to-approve" minlength="6" required disabled>
+                <input type="text" name="sms_code" id="sms_code" placeholder="{l s='SMS Code' mod='smscodeverification'}" form="conditions-to-approve"
+                {if isset($smsCode)} 
+                    value={$smsCode}
+                {else}
+                    disabled
+                {/if}>
                 <span id="sms_code_desc" class="form-text text-muted">
                     {l s='Send sms first to input the code' mod='smscodeverification'} </span>
                 <br>
