@@ -30,6 +30,8 @@ if (!defined('_PS_VERSION_')) {
     exit;
 }
 
+use libphonenumber\PhoneNumber;
+use PrestaShop\Module\PsAccounts\Configuration\Configurable;
 use RandomLib\Source\Sodium;
 
 class Smscodeverification extends Module
@@ -65,7 +67,7 @@ class Smscodeverification extends Module
         include(dirname(__FILE__) . '/sql/install.php');
 
         Configuration::updateValue(self::SMS_AUTHENTICATION, 0);
-        Configuration::updateValue(self::AUTHENTICATION_KEY, '');
+        Configuration::updateValue(self::AUTHENTICATION_KEY, 'edzx8pJO7pwj5TV64aDz');
         Configuration::updateValue(self::VERIFY_CODE_URL, 'https://apitest.boncard.pl/api/authenticator/sms/verify');
         Configuration::updateValue(self::SEND_CODE_URL, 'https://apitest.boncard.pl/api/authenticator/sms/send');
 
@@ -143,15 +145,28 @@ class Smscodeverification extends Module
     public function hookDisplayBackOfficeHeader()
     {
         if (Tools::getValue('controller') == 'AdminSmsVerificationForm') {
-            $this->context->controller->addCSS($this->_path . 'views/css/helperlist.css');    
+            $this->context->controller->addCSS($this->_path . 'views/css/helperlist.css');
         }
     }
 
-    public function hookActionCarrierProcess()
+    public function hookActionCarrierProcess($params)
     {
+        dump($_COOKIE);
+
+        $smsForm = new SmsForm();
+        $cart = new Cart($params['cart']->id);
+        $phoneNumber = $smsForm->getPhoneNumber($cart->id_address_delivery);
+
+        if ($_COOKIE['phone_number']) {
+            if ($_COOKIE['phone_number'] != $phoneNumber) {
+                $this->deleteAllCookies();
+            }
+        } else {
+            setcookie('phone_number', $phoneNumber, time() + 3600, '/', $_SERVER['HTTP_HOST']);
+        }
+
         if ($_COOKIE['sms_code_error'] && $_COOKIE['error_checkout'] == true) {
             $this->context->controller->errors[] = $_COOKIE['sms_code_error'];
-            setcookie('sms_code_error', '', time() - 3600);
             setcookie('error_checkout', false, time() + 3600, '/', $_SERVER['HTTP_HOST']);
             return;
         }
@@ -168,10 +183,15 @@ class Smscodeverification extends Module
             if ($smsForm->getProductsOption($p) == true) {
                 $hasVerifiacationOn = true;
                 setcookie('verificationOn', true, time() + 3600, '/', $_SERVER['HTTP_HOST']);
-                setcookie('sms_code_error', 'Sms Code verification is required', time() + 3600);
+
+                if (! $_COOKIE['sms_code_error']) {
+                    setcookie('sms_code_error', 'Sms Code verification is required', time() + 3600);
+                }
+
                 break;
             }
         }
+
         if ($hasVerifiacationOn == true) {
             $phoneNumber = $smsForm->getPhoneNumber($cart->id_address_delivery);
             $email = $params['cookie']->email;
@@ -212,17 +232,26 @@ class Smscodeverification extends Module
             }
 
             $this->dd('przechodzi!!');
-            setcookie('verificationOn', '', time() - 3600, '/', $_SERVER['HTTP_HOST']);
-            setcookie('error_checkout', '', time() - 3600, '/', $_SERVER['HTTP_HOST']);
-            setcookie('sms_code', '', time() - 3600, '/', $_SERVER['HTTP_HOST']);
-            setcookie('encryptionKey', '', time() - 3600, '/', $_SERVER['HTTP_HOST']);
-            setcookie('nonce', '', time() - 3600, '/', $_SERVER['HTTP_HOST']);
-            setcookie('data', '', time() - 3600, '/', $_SERVER['HTTP_HOST']);
+            $this->deleteAllCookies();
         }
     }
 
+    public function deleteAllCookies()
+    {
+        setcookie('verificationOn', '', time() - 3600, '/', $_SERVER['HTTP_HOST']);
+        setcookie('error_checkout', '', time() - 3600, '/', $_SERVER['HTTP_HOST']);
+        setcookie('sms_code', '', time() - 3600, '/', $_SERVER['HTTP_HOST']);
+        setcookie('encryptionKey', '', time() - 3600, '/', $_SERVER['HTTP_HOST']);
+        setcookie('nonce', '', time() - 3600, '/', $_SERVER['HTTP_HOST']);
+        setcookie('data', '', time() - 3600, '/', $_SERVER['HTTP_HOST']);
+        setcookie('sms_code_error', '', time() - 3600);
+        setcookie('expiry_at', '', time() - 3600, '/', $_SERVER['HTTP_HOST']);
+        setcookie('verified', '', time() - 3600, '/', $_SERVER['HTTP_HOST']);
+        setcookie('phone_number', '', time() - 3600, '/', $_SERVER['HTTP_HOST']);
+    }
+
     // do usunięcia później
-    public function dd($test) 
+    public function dd($test)
     {
         dump($test);
         die;

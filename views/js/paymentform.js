@@ -11,55 +11,85 @@ $(document).ready(function () {
     var sendUrl = data[3];
     var verifyUrl = data[4];
 
-    if (($('#sms_code').val() != '333' && $('#sms_code').val() !== '') || getCookieValue('sms_code') == '') {
+    if ((!getCookieValue('verified') && $('#sms_code').val() !== '') || getCookieValue('sms_code') == '') {
+        showErrorCodeMessage(getCookieValue('sms_code_error'));
+        activeVerifyButton();
         activateInput();
         invalidInputFocusOut();
-        showWrongCodeMessage();
+        badVerifyButton();
         correctCode = 0;
-    } else if (isExpired('2023-07-19 18:00:00')) {
+    } else if (getCookieValue('verified') && isExpired(getCookieValue('expiry_at'))) {
+        showErrorCodeMessage(getCookieValue('sms_code_error'));
+        activeVerifyButton();
         activateInput();
         invalidInputFocusOut();
-        showExpiredCodeMessage();
+        badVerifyButton();
         correctCode = 1;
         activeCode = 0;
-    } else if ($('#sms_code').val()) {
-        activateInput();
+    } else if (getCookieValue('verified')) {
+        disableInput();
+        $('#sms_code_desc').hide();
+        showCorrectCodeMessage(getCookieValue('verified'));
+        document.cookie = 'sms_code_error=; max-age=-99999999;';
+        disableVerifyButton();
         validInputFocusOut();
-        hideErrorMessages();
+        goodVerifyButton();
         correctCode = 1;
         activeCode = 1;
+    } else if (!getCookieValue('expiry_at')) {
+        disableInput();
+        disableVerifyButton();
     }
 
-    $('#sms_code').focusout(function () {
+    $('#send_code').click(function () {
+        activateInput();
+        $('#response_message').show();
+        sendSmsCode(uuid, email, phoneNumber, authKey, sendUrl);
+    })
+
+    $('#verify_code').click(function () {
         code = $('#sms_code').val();
+        expiryAt = getCookieValue('expiry_at');
         document.cookie = "sms_code=" + code + "; max-age=" + 60 * 60 * 24 * 7 + "; path=/; domain=" + window.location.hostname;
-        // if (! isCodeValid(email, phoneNumber, code, authKey, verifyUrl)) {
-        if (code != '333') {
-            var cookieErrorMessage = $('#wrong_code_error_message_cookie').text();
-            document.cookie = "sms_code_error=" + cookieErrorMessage + "; max-age=" + 60 * 60 * 24 * 7;
-            correctCode = 0;
-            invalidInputFocusOut();
-            showWrongCodeMessage();
 
-            return;
-        }
+        isCodeValid(email, phoneNumber, code, authKey, verifyUrl, function (state, message) {
+            if (! state) {
+                correctCode = 0;
+                invalidInputFocusOut();
+                badVerifyButton();
+                document.cookie = "sms_code_error=" + message + "; max-age=" + 60 * 60 * 24 * 7;
+                return;
+            }
 
-        if (isExpired('2023-07-19 18:00:00')) {
-            var cookieErrorMessage = $('#expired_code_error_message_cookie').text();
-            document.cookie = "sms_code_error=" + cookieErrorMessage + "; max-age=" + 60 * 60 * 24 * 7;
-            activeCode = 0;
+            if (isExpired(expiryAt)) {
+                activeCode = 0;
+                correctCode = 1;
+                invalidInputFocusOut();
+                badVerifyButton();
+                document.cookie = "sms_code_error=" + message + "; max-age=" + 60 * 60 * 24 * 7;
+                return;
+            }
+
+            goodVerifyButton();
+            validInputFocusOut();
+            hideErrorMessages();
+            disableVerifyButton();
+            disableInput();
+            showCorrectCodeMessage(message);
+            document.cookie = 'sms_code_error=; max-age=-99999999;';
+            activeCode = 1;
             correctCode = 1;
+            document.cookie = "verified=" + message + "; max-age=" + 60 * 60 * 24 * 7 + "; path=/; domain=" + window.location.hostname;
+        });
+    })
+
+    $('#sms_code').focusout(function () {
+        if (correctCode == 0 || activeCode == 0) {
             invalidInputFocusOut();
-            showExpiredCodeMessage();
-
             return;
+        } else if (correctCode == 1 && activeCode == 1) {
+            validInputFocusOut();
         }
-
-        validInputFocusOut();
-        hideErrorMessages();
-        activeCode = 1;
-        correctCode = 1;
-        document.cookie = 'sms_code_error=; max-age=-99999999;';
     })
 
     $('#sms_code').focus(function () {
@@ -75,8 +105,4 @@ $(document).ready(function () {
         }
     })
 
-    $('#send_code').click(function () {
-        activateInput();
-        sendSmsCode(uuid, email, phoneNumber, authKey, sendUrl);
-    })
 });

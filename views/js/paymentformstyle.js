@@ -37,6 +37,57 @@ function activateInput()
     $('#sms_code_desc').hide();
 }
 
+function disableInput()
+{
+    $('#sms_code').prop("disabled", true);
+}
+
+function activeVerifyButton()
+{
+    $('#verify_code').prop("disabled", false);
+    $('#verify_code').removeClass('disabled');
+    $('#verify_code').css("transition", "0.5s");
+    $('#verify_code').css("opacity", 100);
+}
+
+function disableVerifyButton()
+{
+    $('#verify_code').prop("disabled", true);
+    $('#verify_code').css("transition", "0.5s");
+}
+
+function badVerifyButton()
+{
+    $('#verify_code').removeClass('btn-light');
+    $('#verify_code').removeClass('btn-success');
+    $('#verify_code').addClass('btn-danger');
+    $('#verify_code').css("transition", "0.5s");
+    $('#verify_code').css("opacity", 100);
+}
+
+function goodVerifyButton()
+{
+    $('#verify_code').removeClass('btn-light');
+    $('#verify_code').removeClass('btn-danger');
+    $('#verify_code').addClass('btn-success');
+    $('#verify_code').css("transition", "0.5s");
+    $('#verify_code').css("opacity", 100);
+}
+
+function showCorrectCodeMessage(message)
+{
+    $('#code_message').html(message);
+    $('#code_message').css("color", "#53d572");
+    $('#code_message').show();
+}
+
+function showErrorCodeMessage(message) 
+{
+    $('#code_message').html(message);
+    $('#code_message').css("color", "red");
+    $('#code_message').show();
+}
+
 function showWrongCodeMessage()
 {
     $('#wrong_code_error_message').show();
@@ -48,14 +99,15 @@ function showExpiredCodeMessage()
 {
     $('#expired_code_error_message').show();
     $('#wrong_code_error_message').hide();
-    $('#expired_code_error_message').css("color", "red");    
+    $('#expired_code_error_message').css("color", "red");
 }
 
 function hideErrorMessages()
 {
-    $('#wrong_code_error_message').hide();
-    $('#expired_code_error_message').hide();
+    $('#code_message').hide();
 }
+
+// DOBRY IDEA blokujemy checkbox!!!
 
 // function disableSubmitButton()
 // {
