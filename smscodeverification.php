@@ -151,8 +151,6 @@ class Smscodeverification extends Module
 
     public function hookActionCarrierProcess($params)
     {
-        dump($_COOKIE);
-
         $smsForm = new SmsForm();
         $cart = new Cart($params['cart']->id);
         $phoneNumber = $smsForm->getPhoneNumber($cart->id_address_delivery);
@@ -231,7 +229,6 @@ class Smscodeverification extends Module
                 Tools::redirect($_SERVER['HTTP_REFERER']);
             }
 
-            $this->dd('przechodzi!!');
             $this->deleteAllCookies();
         }
     }
@@ -251,9 +248,9 @@ class Smscodeverification extends Module
     }
 
     // do usunięcia później
-    public function dd($test)
-    {
-        dump($test);
-        die;
-    }
+    // public function dd($test)
+    // {
+    //     dump($test);
+    //     die;
+    // }
 }
