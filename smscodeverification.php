@@ -30,8 +30,6 @@ if (!defined('_PS_VERSION_')) {
     exit;
 }
 
-use libphonenumber\PhoneNumber;
-use PrestaShop\Module\PsAccounts\Configuration\Configurable;
 use RandomLib\Source\Sodium;
 
 class Smscodeverification extends Module
@@ -182,10 +180,6 @@ class Smscodeverification extends Module
                 $hasVerifiacationOn = true;
                 setcookie('verificationOn', true, time() + 3600, '/', $_SERVER['HTTP_HOST']);
 
-                if (! $_COOKIE['sms_code_error']) {
-                    setcookie('sms_code_error', 'Sms Code verification is required', time() + 3600);
-                }
-
                 break;
             }
         }
@@ -193,6 +187,10 @@ class Smscodeverification extends Module
         if ($hasVerifiacationOn == true) {
             $phoneNumber = $smsForm->getPhoneNumber($cart->id_address_delivery);
             $email = $params['cookie']->email;
+
+            if (! $_COOKIE['sms_code_error']) {
+                setcookie('sms_code_error', 'Sms Code verification is required', time() + 3600);
+            }
 
             $data = [
                 $phoneNumber,
@@ -219,6 +217,8 @@ class Smscodeverification extends Module
 
             return $this->display(__FILE__, '/views/templates/front/smsverification.tpl');
         }
+
+        $this->deleteAllCookies();
     }
 
     public function hookActionObjectOrderAddBefore()
